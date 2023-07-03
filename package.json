@@ -1,0 +1,14 @@
+{
+  "name": "clothing-line-backend",
+  "version": "1.0.0",
+  "description": "Clothing line  API for the clothin line frontend",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Titanik Syla",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
