@@ -86,15 +86,19 @@ const User = sequelize.define('User', {
 const Product = sequelize.define('Product',{
   user_id: {
     type: DataTypes.INTEGER,
-    allowNull: true
+    allowNull: false
   },
   category_id: {
       type: DataTypes.INTEGER,
-      allowNull: true
+      allowNull: false
   },
   brand_id: {
       type: DataTypes.INTEGER,
-      allowNull: true
+      allowNull: false
+  },
+  collection_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true
   },
   product_name: {
       type: DataTypes.STRING,
@@ -165,6 +169,80 @@ const Seller = sequelize.define('Seller',{
 }
 )
 
+const Brand = sequelize.define('Brand',{
+  brand_name: {
+      type: DataTypes.STRING,
+      allowNull: false
+  },
+  brand_rating: {
+    type: DataTypes.FLOAT,
+    allowNull: false
+  },
+  brand_image_url:{
+    type: DataTypes.STRING,
+    allowNull: false
+  }
+}, {
+  tableName: 'brands',
+  timestamps: false,
+}
+)
+
+const Category = sequelize.define('Category',{
+  category_name: {
+      type: DataTypes.STRING,
+      allowNull: false
+  }
+}, {
+  tableName: 'categories',
+  timestamps: false,
+}
+)
+
+const Collection = sequelize.define('Collection',{
+  collection_name: {
+      type: DataTypes.STRING,
+      allowNull: false
+  },
+  collection_img: {
+    type: DataTypes.STRING,
+    allowNull: false
+  }
+}, {
+  tableName: 'collections',
+  timestamps: false,
+}
+)
+
+const Cart = sequelize.define('Cart', {
+  user_id:{
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  product_id:{
+    type: DataTypes.INTEGER,
+    allowNull: false
+  }
+  ,product_name:{
+    type: DataTypes.STRING,
+    allowNull: false
+  },product_image:{
+    type: DataTypes.STRING,
+    allowNull: false
+  },product_quantity:{
+    type: DataTypes.STRING,
+    allowNull: false
+  },product_price:{
+    type: DataTypes.STRING,
+    allowNull: false
+  }
+}, {
+  tableName: 'cart_products',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at'
+})
+
 try{
   sequelize.authenticate();
   console.log('Connection has been estabilished successfully');
@@ -175,13 +253,13 @@ try{
 app.use(cors())
 app.use(express.json())
 
-app.get('/', (req, res) => {
-  res.send(`<h1>Clothing line home</h1>`);
-});
+// app.get('/', (req, res) => {
+//   res.send(`<h1>Clothing line home</h1>`);
+// });
 
-app.get('/clothes', (req, res) => {
-  res.send(clothes);
-});
+// app.get('/clothes', (req, res) => {
+//   res.send(clothes);
+// });
 
 app.post('/register',async (req, res) => {
   console.log(req.body);
@@ -231,23 +309,218 @@ app.post('/register',async (req, res) => {
 
 });
 
-// app.post('/product', async (req, res) => {
-//   try{
-//     const createdProduct = await Product.create({
-//       product_name: req.body.product_name,
-//       product_description: req.body.product_description,
-//       product_image: req.body.product_image,
-//       product_color: req.body.product_color,
-//       product_size: req.body.product_size,
-//       qty_in_stock: req.body.qty_in_stock,
-//       price: req.body.price,
-//     })
-//     res.send('Product entered successfully');
-//   }catch(error){
-//     console.log(error);
-//   }
-  
-// })
+app.post('/product', async (req, res) => {
+  try{
+    const createdProduct = await Product.create({
+      user_id: req.body.userId,
+      brand_id: req.body.brandId,
+      category_id: req.body.categoryId,
+      collection_id: req.body.collectionId,
+      product_name: req.body.product_name,
+      product_description: req.body.product_description,
+      product_image: req.body.product_image,
+      product_color: req.body.product_color,
+      product_size: req.body.product_size,
+      qty_in_stock: req.body.qty_in_stock,
+      price: req.body.price,
+    })
+    res.status(200).send({
+      message: 'Product entered successfully',
+    });
+  }catch(error){
+    console.log(error);
+  }
+})
+
+app.post('/cartproducts', async (req,res) => {
+  try {
+    const createCartItem = await Cart.create({
+      user_id: req.body.userId,
+      product_id: req.body.productId,
+      product_name: req.body.productName,
+      product_image: req.body.productImage,
+      product_quantity: req.body.productQuantity,
+      product_price: req.body.productPrice,
+    })
+    res.status(200).send(createCartItem);
+  } catch(error){
+    console.log(error);
+    res.status(400).send({error})
+  }
+})
+
+app.get('/cartproducts/:userId', async (req,res) => {
+  try {
+    const findAllCartProducts = await Cart.findAll({ where: {
+      user_id: req.params.userId
+    }
+    })
+    res.status(200).send({
+      findAllCartProducts: findAllCartProducts
+    });
+  } catch(error){
+    console.log(error);
+    res.status(400).send({error})
+  }
+})
+
+app.delete('/cartproduct/:cartProductId', async (req,res) => {
+  try {
+    const findProductToDelete = await Cart.destroy({ where: {
+      id: req.params.cartProductId
+    }
+    })
+    res.status(200).send({
+      message: 'you deleted a product',
+      findProductToDelete: findProductToDelete
+    });
+  } catch(error){
+    console.log(error);
+    res.status(400).send({error})
+  }
+})
+
+
+app.get('/myproducts/:userId', async (req, res) => {
+  try {
+    const allMyProducts = await Product.findAll({where: {
+      user_id: req.params.userId
+    }})
+    res.status(200).send(
+      {
+      myProducts: allMyProducts
+      });
+  } catch (error) {
+    console.log(error);
+  }
+})
+
+app.get('/myproducts' , async (req, res) => {
+  try{
+    const productToShow = await Product.findOne({
+      id: req.body.productId
+    })
+    res.status(200).send({
+      productToShow: productToShow
+    })
+  }catch(error){
+    console.log(error);
+  }
+})
+
+app.get('/product', async (req, res) => {
+  try{
+    const allTheProducts = await Product.findAll(); 
+    const allTheBrands = await Brand.findAll();
+    const allTheCategories = await Category.findAll();
+    const allTheCollections = await Collection.findAll();
+    res.status(200).send({
+      allProducts: allTheProducts,
+      allBrands: allTheBrands,
+      allCategories: allTheCategories,
+      allCollections: allTheCollections
+    });
+  }catch(error){
+    console.log(error);
+  }
+})
+
+app.get('/product/:productId', async (req,res) => {
+  try{
+    const productToShow = await Product.findOne( {where:
+      {   
+        id: req.params.productId
+      }
+    })
+
+    console.log(productToShow);
+    res.status(200).send({
+      product: productToShow
+    });
+  }catch(error){
+    console.log(error);
+  }
+})
+
+app.put('/editproduct/:productId', async (req,res) => {
+  try{
+    const productToUpdate = await Product.findOne({ where: 
+    {
+      id: req.params.productId
+    }})
+
+    productToUpdate.update({
+      category_id: req.body.categoryId,
+      brand_id: req.body.brandId,
+      collection_id: req.body.collectionId,
+      product_name: req.body.product_name,
+      product_description: req.body.product_description,
+      product_image: req.body.product_image,
+      product_color: req.body.product_color,
+      product_size: req.body.product_size,
+      qty_in_stock: req.body.qty_in_stock,
+      price: req.body.price
+    })
+    res.status(200).send(productToUpdate);
+  }catch(error){
+    console.log(error);
+  }
+
+})
+
+app.get('/brands', async (req,res) => {
+  try{
+    const allTheBrands = await Brand.findAll()
+    console.log(allTheBrands);
+    res.status(200).send({
+      allBrands: allTheBrands
+    });
+  }catch(error){
+    console.log(error);
+  }
+})
+
+app.get('/brand/:brandId', async (req,res) => {
+  try{
+    const brandToShow = await Brand.findOne( {where:
+      {   
+        id: req.params.brandId
+      }
+    })
+
+    console.log(brandToShow);
+    res.status(200).send({
+      brand: brandToShow
+    });
+  }catch(error){
+    console.log(error);
+  }
+})
+
+app.get('/collection/:collectionId', async (req,res) => {
+  try{
+    const collectionToShow = await Collection.findOne( {where:
+      {   
+        id: req.params.collectionId
+      }
+    })
+
+    const collectionProducts = await Product.findAll( {
+      where:{
+        collection_id: req.params.collectionId
+      }
+    })
+
+    console.log(collectionToShow,collectionProducts);
+    res.status(200).send({
+      collection: collectionToShow,
+      collectionProducts:collectionProducts
+    });
+  }catch(error){
+    console.log(error);
+  }
+})
+
 
 app.post('/login', async (req,res) => {
   const userToLogin = await User.findOne( {where: 
@@ -285,7 +558,6 @@ app.post('/myprofile', async(req, res) => {
 
 app.post('/sellerprofile', async (req,res) => {
   try {
-
     const sellerToFind =  await Seller.findOne({
       where: {
         user_id: req.body.user_id
