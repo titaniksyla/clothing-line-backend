@@ -488,9 +488,14 @@ app.get('/brand/:brandId', async (req,res) => {
       }
     })
 
-    console.log(brandToShow);
+    const productsToShow = await Product.findAll( { where: {
+      brand_id: req.params.brandId
+    }})
+
+    // console.log(brandToShow);
     res.status(200).send({
-      brand: brandToShow
+      brand: brandToShow,
+      productsToShow: productsToShow
     });
   }catch(error){
     console.log(error);
